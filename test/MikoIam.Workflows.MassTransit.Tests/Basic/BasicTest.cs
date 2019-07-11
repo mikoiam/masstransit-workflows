@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Xunit;
 using MassTransit;
 using System.Threading.Tasks;
@@ -11,30 +12,24 @@ namespace MikoIam.Workflows.MassTransit.Tests.Basic
         public async Task Test()
         {
             // Arrange
-            var result = string.Empty;
+            var result = new StringBuilder();
+            var workflow = new BasicWorkflow(result);
 
             var bus = Bus.Factory.CreateUsingInMemory(sbc =>
-                    {
-                        sbc.ReceiveEndpoint("test_queue", ep =>
-                        {
-                            ep.Handler<BasicMessage>((context) =>
-                            {
-                                result = $"Received: {context.Message.Text}";
-                                return Task.CompletedTask;
-                            });
-                        });
-                    });
+            {
+                sbc.ReceiveEndpoint("basic_workflow", ep => { ep.Workflow(workflow); });
+            });
 
             // Act
             bus.Start();
 
-            await bus.Publish(new BasicMessage { Text = "Hi" });
+            await bus.Publish(new StartWorkflowMessage());
 
             await Task.Delay(3000);
             bus.Stop();
 
             // Assert
-            Assert.Equal("Received: Hi", result);
+            Assert.Equal("A", result.ToString());
         }
     }
 }

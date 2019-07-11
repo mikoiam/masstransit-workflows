@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{246CDA2A-D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikoIam.Workflows.Engine.Tests", "test\MikoIam.Workflows.Engine.Tests\MikoIam.Workflows.Engine.Tests.csproj", "{6DB58F6A-4889-4047-8CF9-2C112945D92C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikoIam.Workflows.MassTransit.Tests", "test\MikoIam.Workflows.MassTransit.Tests\MikoIam.Workflows.MassTransit.Tests.csproj", "{BF69A5AE-31F7-4083-9EEC-0046609334D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -62,10 +64,23 @@ Global
 		{6DB58F6A-4889-4047-8CF9-2C112945D92C}.Release|x64.Build.0 = Release|Any CPU
 		{6DB58F6A-4889-4047-8CF9-2C112945D92C}.Release|x86.ActiveCfg = Release|Any CPU
 		{6DB58F6A-4889-4047-8CF9-2C112945D92C}.Release|x86.Build.0 = Release|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Debug|x64.Build.0 = Debug|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Debug|x86.Build.0 = Debug|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Release|x64.ActiveCfg = Release|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Release|x64.Build.0 = Release|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Release|x86.ActiveCfg = Release|Any CPU
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D8B42100-6DB1-4EBA-A743-B62DFFFAB8D8} = {C1A18FF9-0E75-4B46-8612-B60516A7FDC0}
 		{44AA92E9-081E-4205-98FC-2CBB8E74B24F} = {C1A18FF9-0E75-4B46-8612-B60516A7FDC0}
 		{6DB58F6A-4889-4047-8CF9-2C112945D92C} = {246CDA2A-D441-4DC6-8443-A0AF17D7C684}
+		{BF69A5AE-31F7-4083-9EEC-0046609334D7} = {246CDA2A-D441-4DC6-8443-A0AF17D7C684}
 	EndGlobalSection
 EndGlobal

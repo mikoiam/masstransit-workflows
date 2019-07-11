@@ -1,5 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <ItemGroup>
+    <ProjectReference Include="..\MikoIam.Workflows.Engine\MikoIam.Workflows.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit" Version="5.5.2" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>

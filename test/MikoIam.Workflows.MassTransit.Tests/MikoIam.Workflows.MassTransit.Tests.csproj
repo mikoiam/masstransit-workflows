@@ -13,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\MikoIam.Workflows.Engine\MikoIam.Workflows.Engine.csproj" />
+    <ProjectReference Include="..\..\src\MikoIam.Workflows.MassTransit\MikoIam.Workflows.MassTransit.csproj" />
   </ItemGroup>
 
 </Project>

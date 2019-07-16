@@ -4,13 +4,15 @@ namespace MikoIam.Workflows.MassTransit.Tests.Basic
 {
     public class BasicWorkflow : Workflow
     {
-        public WorkflowTask A => new WorkflowTask("A", () => { });
+        private WorkflowTask A { get; } = new WorkflowTask("A", () => { });
+        private WorkflowTask B { get; } = new WorkflowTask("B", () => { });
 
-        public void Setup()
+        public BasicWorkflow()
         {
             StartOn<StartWorkflowMessage>();
             Initially().Do(A);
-            After(A).Finish();
+            After(A).Do(B);
+            After(B).Finish();
         }
     }
 }

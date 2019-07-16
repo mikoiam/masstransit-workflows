@@ -30,7 +30,7 @@ namespace MikoIam.Workflows.MassTransit.Tests.Basic
             bus.Stop();
 
             // Assert
-            Assert.Equal("A", observer.TaskOrder);
+            Assert.Equal("AB", observer.TaskOrder);
         }
     }
 }

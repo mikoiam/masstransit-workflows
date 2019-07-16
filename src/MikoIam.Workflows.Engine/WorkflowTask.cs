@@ -4,17 +4,13 @@ namespace MikoIam.Workflows.Engine
 {
     public class WorkflowTask
     {
-        private readonly string _taskId;
+        public string TaskId { get; }
+        public Action Action { get; }
 
-        public WorkflowTask(string taskId, Action doA)
+        public WorkflowTask(string taskId, Action action)
         {
-            _taskId = taskId;
-            throw new System.NotImplementedException();
-        }
-
-        public WorkflowTask CompleteOn<T>()
-        {
-            throw new System.NotImplementedException();
+            TaskId = taskId;
+            Action = action;
         }
     }
 }

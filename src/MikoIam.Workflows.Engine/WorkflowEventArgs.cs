@@ -2,9 +2,13 @@ using System;
 
 namespace MikoIam.Workflows.Engine
 {
-    
     public class WorkflowEventArgs : EventArgs
     {
-        public string WorkflowId { get; set; }
+        public WorkflowEventArgs(string workflowId)
+        {
+            WorkflowId = workflowId;
+        }
+
+        public string WorkflowId { get; }
     }
 }

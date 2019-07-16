@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Threading;
 using Xunit;
 using MassTransit;
 using System.Threading.Tasks;
@@ -12,8 +13,8 @@ namespace MikoIam.Workflows.MassTransit.Tests.Basic
         public async Task Test()
         {
             // Arrange
-            var result = new StringBuilder();
-            var workflow = new BasicWorkflow(result);
+            var workflow = new BasicWorkflow();
+            var observer = new SingleWorkflowObserver(workflow);
 
             var bus = Bus.Factory.CreateUsingInMemory(sbc =>
             {
@@ -24,12 +25,12 @@ namespace MikoIam.Workflows.MassTransit.Tests.Basic
             bus.Start();
 
             await bus.Publish(new StartWorkflowMessage());
-
-            await Task.Delay(3000);
+            observer.WorkflowFinishedHandle.Wait(TimeSpan.FromSeconds(5));
+            
             bus.Stop();
 
             // Assert
-            Assert.Equal("A", result.ToString());
+            Assert.Equal("A", observer.TaskOrder);
         }
     }
 }

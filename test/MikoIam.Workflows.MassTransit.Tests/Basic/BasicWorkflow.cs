@@ -1,14 +1,19 @@
+using System;
 using MikoIam.Workflows.Engine;
 
 namespace MikoIam.Workflows.MassTransit.Tests.Basic
 {
     public class BasicWorkflow : Workflow
     {
-        private WorkflowTask A { get; } = new WorkflowTask("A", () => { });
-        private WorkflowTask B { get; } = new WorkflowTask("B", () => { });
+        private WorkflowTask A { get; }
+        private WorkflowTask B { get; }
 
-        public BasicWorkflow()
+        
+        public BasicWorkflow(Action actionA, Action actionB)
         {
+            A = new WorkflowTask("A", actionA);
+            B = new WorkflowTask("B", actionB);
+            
             StartOn<StartWorkflowMessage>();
             Initially().Do(A);
             After(A).Do(B);

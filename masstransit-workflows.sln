@@ -15,6 +15,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikoIam.Workflows.Engine.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MikoIam.Workflows.MassTransit.Tests", "test\MikoIam.Workflows.MassTransit.Tests\MikoIam.Workflows.MassTransit.Tests.csproj", "{BF69A5AE-31F7-4083-9EEC-0046609334D7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{2FE50D3D-7E73-4C15-95D9-D91DA0707959}"
+ProjectSection(SolutionItems) = preProject
+	doc\TODO.md = doc\TODO.md
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

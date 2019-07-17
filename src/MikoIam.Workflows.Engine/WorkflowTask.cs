@@ -12,5 +12,10 @@ namespace MikoIam.Workflows.Engine
             TaskId = taskId;
             Action = action;
         }
+
+        public WorkflowTask CompleteOn<T>()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

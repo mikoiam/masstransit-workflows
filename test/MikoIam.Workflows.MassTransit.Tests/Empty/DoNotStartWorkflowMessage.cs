@@ -1,4 +1,4 @@
-namespace MikoIam.Workflows.MassTransit.Tests.Basic
+namespace MikoIam.Workflows.MassTransit.Tests.Empty
 {
     public class DoNotStartWorkflowMessage
     {

@@ -1,15 +1,15 @@
 using System;
 using MikoIam.Workflows.Engine;
 
-namespace MikoIam.Workflows.MassTransit.Tests.Basic
+namespace MikoIam.Workflows.MassTransit.Tests.AutocompleteTasks
 {
-    public class BasicWorkflow : Workflow
+    public class AutocompleteTasksWorkflow : Workflow
     {
         private WorkflowTask A { get; }
         private WorkflowTask B { get; }
 
         
-        public BasicWorkflow(Action actionA, Action actionB)
+        public AutocompleteTasksWorkflow(Action actionA, Action actionB)
         {
             A = new WorkflowTask("A", actionA);
             B = new WorkflowTask("B", actionB);

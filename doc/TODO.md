@@ -1,1 +1,3 @@
 - workflow validation
+- workflow concurrent message consumption
+- make Workflow valid after construction

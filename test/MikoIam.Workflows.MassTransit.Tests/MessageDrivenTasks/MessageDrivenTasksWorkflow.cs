@@ -5,15 +5,15 @@ namespace MikoIam.Workflows.MassTransit.Tests.MessageDrivenTasks
 {
     public class MessageDrivenTasksWorkflow : Workflow
     {
-        private WorkflowTask A { get; } = new WorkflowTask("A", () => { }).CompleteOn<CompleteTaskAMessage>();
-        private WorkflowTask B { get; } = new WorkflowTask("B", () => { }).CompleteOn<CompleteTaskBMessage>();
-
         public MessageDrivenTasksWorkflow()
         {
+            var a = new WorkflowTask<CompleteTaskAMessage>("A", () => { });
+            var b = new WorkflowTask<CompleteTaskBMessage>("B", () => { });
+            
             StartOn<StartWorkflowMessage>();
-            Initially().Do(A);
-            After(A).Do(B);
-            After(B).Finish();
+            Initially().Do(a);
+            After(a).Do(b);
+            After(b).Finish();
         }
     }
 }

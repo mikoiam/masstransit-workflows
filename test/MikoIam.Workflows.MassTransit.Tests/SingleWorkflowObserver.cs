@@ -10,6 +10,7 @@ namespace MikoIam.Workflows.MassTransit.Tests
         private readonly StringBuilder _eventSequence = new StringBuilder();
 
         public ManualResetEventSlim WorkflowFinishedHandle { get; } = new ManualResetEventSlim();
+        public AutoResetEvent TaskStartedHandle { get; } = new AutoResetEvent(false);
         public string EventSequence => _eventSequence.ToString(0, Math.Max(_eventSequence.Length - 1, 0));
 
         public SingleWorkflowObserver(Workflow workflow)
@@ -20,8 +21,15 @@ namespace MikoIam.Workflows.MassTransit.Tests
                 _eventSequence.Append("$WF-");
                 WorkflowFinishedHandle.Set();
             };
-            workflow.TaskStarted += (sender, args) => { _eventSequence.Append($"@{args.TaskId}-"); };
-            workflow.TaskFinished += (sender, args) => { _eventSequence.Append($"${args.TaskId}-"); };
+            workflow.TaskStarted += (sender, args) =>
+            {
+                _eventSequence.Append($"@{args.TaskId}-");
+                TaskStartedHandle.Set();
+            };
+            workflow.TaskFinished += (sender, args) =>
+            {
+                _eventSequence.Append($"${args.TaskId}-");
+            };
         }
     }
 }

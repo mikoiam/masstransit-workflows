@@ -27,10 +27,10 @@ namespace MikoIam.Workflows.MassTransit
         {
             var connectPipeMethod =
                 GetType().GetMethod(nameof(ConnectPipe), BindingFlags.NonPublic | BindingFlags.Instance);
+            Debug.Assert(connectPipeMethod != null, nameof(connectPipeMethod) + " != null");
 
-            foreach (var type in _workflow.StartsOn)
+            foreach (var type in _workflow.ConsumedMessages)
             {
-                Debug.Assert(connectPipeMethod != null, nameof(connectPipeMethod) + " != null");
                 connectPipeMethod.MakeGenericMethod(type).Invoke(this, new object[] {builder});
             }
         }

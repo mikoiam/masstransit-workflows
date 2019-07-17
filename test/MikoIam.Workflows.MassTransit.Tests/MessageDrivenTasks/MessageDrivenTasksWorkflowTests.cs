@@ -27,15 +27,38 @@ namespace MikoIam.Workflows.MassTransit.Tests.MessageDrivenTasks
             _bus.Start();
 
             await _bus.Publish(new StartWorkflowMessage());
+            var taskAStarted = _observer.TaskStartedHandle.WaitOne(TimeSpan.FromSeconds(5)); 
             await _bus.Publish(new CompleteTaskAMessage());
+            var taskBStarted = _observer.TaskStartedHandle.WaitOne(TimeSpan.FromSeconds(5)); 
             await _bus.Publish(new CompleteTaskBMessage());
             var workflowFinished = _observer.WorkflowFinishedHandle.Wait(TimeSpan.FromSeconds(5));
 
             _bus.Stop();
 
             // Assert
+            Assert.True(taskAStarted);
+            Assert.True(taskBStarted);
             Assert.True(workflowFinished);
             Assert.Equal("@WF-@A-$A-@B-$B-$WF", _observer.EventSequence);
+        }
+        
+        [Fact]
+        public async Task ShouldNotCompleteWorkflowWhenTaskCompletionEventsArriveInReverseOrder()
+        {
+            // Act
+            _bus.Start();
+
+            await _bus.Publish(new StartWorkflowMessage());
+            var taskAStarted = _observer.TaskStartedHandle.WaitOne(TimeSpan.FromSeconds(5)); 
+            await _bus.Publish(new CompleteTaskBMessage());
+            var workflowFinished = _observer.WorkflowFinishedHandle.Wait(TimeSpan.FromSeconds(5));
+
+            _bus.Stop();
+
+            // Assert
+            Assert.True(taskAStarted);
+            Assert.False(workflowFinished);
+            Assert.Equal("@WF-@A", _observer.EventSequence);
         }
         
         [Fact]
@@ -45,14 +68,16 @@ namespace MikoIam.Workflows.MassTransit.Tests.MessageDrivenTasks
             _bus.Start();
 
             await _bus.Publish(new StartWorkflowMessage());
+            var taskAStarted = _observer.TaskStartedHandle.WaitOne(TimeSpan.FromSeconds(5)); 
             await _bus.Publish(new CompleteTaskAMessage());
             var workflowFinished = _observer.WorkflowFinishedHandle.Wait(TimeSpan.FromSeconds(5));
 
             _bus.Stop();
 
             // Assert
+            Assert.True(taskAStarted);
             Assert.False(workflowFinished);
-            Assert.Equal("@WF-@A-$A", _observer.EventSequence);
+            Assert.Equal("@WF-@A-$A-@B", _observer.EventSequence);
         }
     }
 }

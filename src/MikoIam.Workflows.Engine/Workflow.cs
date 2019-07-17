@@ -7,15 +7,19 @@ namespace MikoIam.Workflows.Engine
     public class Workflow
     {
         private readonly List<Type> _startsOn = new List<Type>();
+        private readonly Dictionary<WorkflowTask, Type> _continuesOn = new Dictionary<WorkflowTask, Type>();
         private readonly Dictionary<WorkflowTask, Precondition> _tasks = new Dictionary<WorkflowTask, Precondition>();
         private readonly List<Precondition> _finish = new List<Precondition>();
+        private string _workflowId;
+        private List<WorkflowTask> _finishedTasks = new List<WorkflowTask>();
+        private List<WorkflowTask> _startedTasks = new List<WorkflowTask>();
 
         public event EventHandler<WorkflowEventArgs> WorkflowStarted;
         public event EventHandler<WorkflowEventArgs> WorkflowFinished;
         public event EventHandler<WorkflowTaskEventArgs> TaskStarted;
         public event EventHandler<WorkflowTaskEventArgs> TaskFinished;
 
-        public IEnumerable<Type> StartsOn => _startsOn;
+        public IEnumerable<Type> ConsumedMessages => _startsOn.Concat(_continuesOn.Select(kv => kv.Value)).Distinct();
 
         protected Precondition After(WorkflowTask workflowTask)
         {
@@ -34,15 +38,29 @@ namespace MikoIam.Workflows.Engine
 
         public void ConsumeMessage<T>(T message)
         {
-            if (!_startsOn.Contains(typeof(T)))
+            var iterate = false;
+            if (_startsOn.Contains(typeof(T)))
             {
-                return;
+                _workflowId = Guid.NewGuid().ToString();
+                _finishedTasks = new List<WorkflowTask>();
+                _startedTasks = new List<WorkflowTask>();
+                WorkflowStarted?.Invoke(this, new WorkflowEventArgs(_workflowId));
+                iterate = true;
             }
 
-            var workflowId = Guid.NewGuid().ToString();
-            WorkflowStarted?.Invoke(this, new WorkflowEventArgs(workflowId));
+            var tasks = _continuesOn.Where(kv => kv.Value == typeof(T)).Select(kv => kv.Key)
+                .Where(task => _startedTasks.Contains(task));
+            foreach (var workflowTask in tasks)
+            {
+                TaskFinished?.Invoke(this, new WorkflowTaskEventArgs(_workflowId, workflowTask.TaskId));
+                _finishedTasks.Add(workflowTask);
+                iterate = true;
+            }
 
-            IterateWorkflow(workflowId, new List<WorkflowTask>());
+            if (iterate)
+            {
+                IterateWorkflow(_workflowId, _finishedTasks);
+            }
         }
 
         private void IterateWorkflow(string workflowId, IReadOnlyCollection<WorkflowTask> finishedTasks)
@@ -55,15 +73,25 @@ namespace MikoIam.Workflows.Engine
 
             var tasksToExecute = _tasks.Where(kv => kv.Value.Met(finishedTasks) && !finishedTasks.Contains(kv.Key))
                 .Select(kv => kv.Key).ToList();
-            
+
+            var anythingFinished = false;
             foreach (var task in tasksToExecute)
             {
                 task.Action();
+                _startedTasks.Add(task);
                 TaskStarted?.Invoke(this, new WorkflowTaskEventArgs(workflowId, task.TaskId));
-                TaskFinished?.Invoke(this, new WorkflowTaskEventArgs(workflowId, task.TaskId));
+                if (task.Autocomplete)
+                {
+                    TaskFinished?.Invoke(this, new WorkflowTaskEventArgs(workflowId, task.TaskId));
+                    _finishedTasks.Add(task);
+                    anythingFinished = true;
+                }
             }
 
-            IterateWorkflow(workflowId, new List<WorkflowTask>(finishedTasks.Concat(tasksToExecute)));
+            if (anythingFinished)
+            {
+                IterateWorkflow(workflowId, _finishedTasks);
+            }
         }
 
         protected class Precondition
@@ -84,6 +112,12 @@ namespace MikoIam.Workflows.Engine
             public void Do(WorkflowTask workflowTask)
             {
                 _workflow._tasks.Add(workflowTask, this);
+            }
+
+            public void Do<TCompleteMessage>(WorkflowTask<TCompleteMessage> workflowTask)
+            {
+                _workflow._tasks.Add(workflowTask, this);
+                _workflow._continuesOn.Add(workflowTask, typeof(TCompleteMessage));
             }
 
             public void Finish()

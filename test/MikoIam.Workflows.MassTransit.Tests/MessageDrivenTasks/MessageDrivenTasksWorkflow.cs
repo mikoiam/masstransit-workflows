@@ -6,8 +6,8 @@ namespace MikoIam.Workflows.MassTransit.Tests.MessageDrivenTasks
     {
         public MessageDrivenTasksWorkflow()
         {
-            var a = this.CreateTask("A", () => { }, (EmptyContext ctx, CompleteTaskAMessage msg) => true);
-            var b = this.CreateTask("B", () => { }, (EmptyContext ctx, CompleteTaskBMessage msg) => true);
+            var a = this.CreateTask("A", ctx => { }, (EmptyContext ctx, CompleteTaskAMessage msg) => true);
+            var b = this.CreateTask("B", ctx => { }, (EmptyContext ctx, CompleteTaskBMessage msg) => true);
 
             StartOn<StartWorkflowMessage>();
             Initially().Do(a);

@@ -13,7 +13,7 @@ namespace MikoIam.Workflows.MassTransit.Tests.AutocompleteTasks
             // Arrange
             var aCalled = false;
             var bCalled = false;
-            var workflow = new AutocompleteTasksWorkflow(() => { aCalled = true; }, () => { bCalled = true; });
+            var workflow = new AutocompleteTasksWorkflow(ctx => { aCalled = true; }, ctx => { bCalled = true; });
             var observer = new SingleWorkflowObserver<EmptyContext>(workflow, context => true);
 
             var bus = Bus.Factory.CreateUsingInMemory(sbc =>

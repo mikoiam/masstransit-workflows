@@ -62,11 +62,13 @@ namespace MikoIam.Workflows.Engine
             var tasksToFinish = _continuesOn.Where(kv => kv.Value == typeof(TMessage)).Select(kv => kv.Key);
             foreach (var workflowTask in tasksToFinish)
             {
+                var messageBasedTask = (WorkflowTask<TWfContext, TMessage>) workflowTask;
                 var runsToProcess = runs.Where(r =>
-                        ((WorkflowTask<TWfContext, TMessage>) workflowTask).WorkflowRunSelector(r.Context, message))
+                        (messageBasedTask).WorkflowRunSelector(r.Context, message))
                     .Where(r => r.HasStarted(workflowTask));
                 foreach (var run in runsToProcess)
                 {
+                    messageBasedTask.AfterMessageReceived?.Invoke(run.Context, message);
                     TaskFinished?.Invoke(this,
                         new WorkflowTaskEventArgs<TWfContext>(run.RunId, workflowTask.TaskId, run.Context));
                     run.FinishTask(workflowTask);
@@ -89,7 +91,7 @@ namespace MikoIam.Workflows.Engine
             var anythingFinished = false;
             foreach (var task in tasksToExecute)
             {
-                task.Action();
+                task.Action(run.Context);
                 run.StartTask(task);
                 TaskStarted?.Invoke(this, new WorkflowTaskEventArgs<TWfContext>(run.RunId, task.TaskId, run.Context));
                 if (task.Autocomplete)

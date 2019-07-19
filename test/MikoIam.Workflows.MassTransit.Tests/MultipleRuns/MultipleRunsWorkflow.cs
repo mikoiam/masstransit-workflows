@@ -1,5 +1,4 @@
 using MikoIam.Workflows.Engine;
-using MikoIam.Workflows.MassTransit.Tests.MessageDrivenTasks;
 
 namespace MikoIam.Workflows.MassTransit.Tests.MultipleRuns
 {
@@ -7,11 +6,14 @@ namespace MikoIam.Workflows.MassTransit.Tests.MultipleRuns
     {
         public MultipleRunsWorkflow()
         {
-            var a = new WorkflowTask<CompleteTaskAMessage>("A", () => { });
-            var b = new WorkflowTask<CompleteTaskBMessage>("B", () => { });
-
-            StartOn<StartWorkflowMessage>(msg => new MultipleRunsWorkflowContext { SomeProp = msg.Correlation});
+            var a = this.CreateTask("A", () => { },
+                (MultipleRunsWorkflowContext ctx, CompleteTaskAMessage msg) => ctx.SomeProp == msg.Correlation);
             
+            var b = this.CreateTask("B", () => { },
+            (MultipleRunsWorkflowContext ctx, CompleteTaskBMessage msg) => ctx.SomeProp == msg.Correlation);
+
+            StartOn<StartWorkflowMessage>(msg => new MultipleRunsWorkflowContext {SomeProp = msg.Correlation});
+
             Initially().Do(a);
             After(a).Do(b);
             After(b).Finish();

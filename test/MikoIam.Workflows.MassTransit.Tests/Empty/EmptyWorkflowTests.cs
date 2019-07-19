@@ -12,7 +12,7 @@ namespace MikoIam.Workflows.MassTransit.Tests.Empty
         {
             // Arrange
             var workflow = new EmptyWorkflow();
-            var observer = new SingleWorkflowObserver(workflow);
+            var observer = new SingleWorkflowObserver<EmptyContext>(workflow);
 
             var bus = Bus.Factory.CreateUsingInMemory(sbc =>
             {
@@ -36,7 +36,7 @@ namespace MikoIam.Workflows.MassTransit.Tests.Empty
         {
             // Arrange
             var workflow = new EmptyWorkflow();
-            var observer = new SingleWorkflowObserver(workflow);
+            var observer = new SingleWorkflowObserver<EmptyContext>(workflow);
 
             var bus = Bus.Factory.CreateUsingInMemory(sbc =>
             {

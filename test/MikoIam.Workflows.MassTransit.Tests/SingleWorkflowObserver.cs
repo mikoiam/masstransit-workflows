@@ -13,6 +13,10 @@ namespace MikoIam.Workflows.MassTransit.Tests
         public AutoResetEvent TaskStartedHandle { get; } = new AutoResetEvent(false);
         public string EventSequence => _eventSequence.ToString(0, Math.Max(_eventSequence.Length - 1, 0));
 
+        public SingleWorkflowObserver(Workflow<TWfContext> workflow) : this(workflow, context => true)
+        {
+        }
+
         public SingleWorkflowObserver(Workflow<TWfContext> workflow, Func<TWfContext, bool> workflowSelector)
         {
             workflow.WorkflowStarted += (sender, args) =>
@@ -56,13 +60,6 @@ namespace MikoIam.Workflows.MassTransit.Tests
 
                 _eventSequence.Append($"${args.TaskId}-");
             };
-        }
-    }
-
-    public class SingleWorkflowObserver : SingleWorkflowObserver<EmptyContext>
-    {
-        public SingleWorkflowObserver(Workflow<EmptyContext> workflow) : base(workflow, context => true)
-        {
         }
     }
 }

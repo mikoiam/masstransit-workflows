@@ -7,13 +7,13 @@ namespace MikoIam.Workflows.MassTransit.Tests.MessageDrivenTasks
 {
     public class MessageDrivenTasksWorkflowTests
     {
-        private readonly SingleWorkflowObserver _observer;
+        private readonly SingleWorkflowObserver<EmptyContext> _observer;
         private readonly IBusControl _bus;
 
         public MessageDrivenTasksWorkflowTests()
         {
             var workflow = new MessageDrivenTasksWorkflow();
-            _observer = new SingleWorkflowObserver(workflow);
+            _observer = new SingleWorkflowObserver<EmptyContext>(workflow);
             _bus = Bus.Factory.CreateUsingInMemory(sbc =>
             {
                 sbc.ReceiveEndpoint("message_driven_task_workflow", ep => { ep.Workflow(workflow); });

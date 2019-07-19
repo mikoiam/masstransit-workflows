@@ -1,4 +1,4 @@
-namespace MikoIam.Workflows.Engine
+namespace MikoIam.Workflows.MassTransit.Tests.Empty
 {
     public class EmptyContext
     {

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,10 +8,15 @@ namespace MikoIam.Workflows.Engine
     public class Workflow<TWfContext> where TWfContext : new()
     {
         private readonly Dictionary<Type, Delegate> _startsOn = new Dictionary<Type, Delegate>();
-        private readonly Dictionary<WorkflowTask, Type> _continuesOn = new Dictionary<WorkflowTask, Type>();
-        private readonly Dictionary<WorkflowTask, Precondition> _tasks = new Dictionary<WorkflowTask, Precondition>();
+
+        private readonly Dictionary<WorkflowTask<TWfContext>, Type> _continuesOn =
+            new Dictionary<WorkflowTask<TWfContext>, Type>();
+
+        private readonly Dictionary<WorkflowTask<TWfContext>, Precondition> _tasks =
+            new Dictionary<WorkflowTask<TWfContext>, Precondition>();
+
         private readonly List<Precondition> _finish = new List<Precondition>();
-        private WorkflowRun<TWfContext> _run;
+        private readonly ConcurrentBag<WorkflowRun<TWfContext>> _runs = new ConcurrentBag<WorkflowRun<TWfContext>>();
 
         public event EventHandler<WorkflowEventArgs<TWfContext>> WorkflowStarted;
         public event EventHandler<WorkflowEventArgs<TWfContext>> WorkflowFinished;
@@ -20,7 +26,7 @@ namespace MikoIam.Workflows.Engine
         public IEnumerable<Type> ConsumedMessages =>
             _startsOn.Select(kv => kv.Key).Concat(_continuesOn.Select(kv => kv.Value)).Distinct();
 
-        protected Precondition After(WorkflowTask workflowTask)
+        protected Precondition After(WorkflowTask<TWfContext> workflowTask)
         {
             return new Precondition(this, workflowTask);
         }
@@ -42,27 +48,30 @@ namespace MikoIam.Workflows.Engine
 
         public void ConsumeMessage<TMessage>(TMessage message)
         {
-            var iterate = false;
             if (_startsOn.ContainsKey(typeof(TMessage)))
             {
-                _run = new WorkflowRun<TWfContext>(((Func<TMessage, TWfContext>) _startsOn[typeof(TMessage)])(message));
-                WorkflowStarted?.Invoke(this, new WorkflowEventArgs<TWfContext>(_run.RunId, _run.Context));
-                iterate = true;
+                var run = new WorkflowRun<TWfContext>(
+                    ((Func<TMessage, TWfContext>) _startsOn[typeof(TMessage)])(message));
+                _runs.Add(run);
+                WorkflowStarted?.Invoke(this, new WorkflowEventArgs<TWfContext>(run.RunId, run.Context));
+                IterateWorkflow(run);
+                return;
             }
 
-            var tasks = _continuesOn.Where(kv => kv.Value == typeof(TMessage)).Select(kv => kv.Key)
-                .Where(task => _run.HasStarted(task));
-            foreach (var workflowTask in tasks)
+            var runs = _runs.ToArray();
+            var tasksToFinish = _continuesOn.Where(kv => kv.Value == typeof(TMessage)).Select(kv => kv.Key);
+            foreach (var workflowTask in tasksToFinish)
             {
-                TaskFinished?.Invoke(this,
-                    new WorkflowTaskEventArgs<TWfContext>(_run.RunId, workflowTask.TaskId, _run.Context));
-                _run.FinishTask(workflowTask);
-                iterate = true;
-            }
-
-            if (iterate)
-            {
-                IterateWorkflow(_run);
+                var runsToProcess = runs.Where(r =>
+                        ((WorkflowTask<TWfContext, TMessage>) workflowTask).WorkflowRunSelector(r.Context, message))
+                    .Where(r => r.HasStarted(workflowTask));
+                foreach (var run in runsToProcess)
+                {
+                    TaskFinished?.Invoke(this,
+                        new WorkflowTaskEventArgs<TWfContext>(run.RunId, workflowTask.TaskId, run.Context));
+                    run.FinishTask(workflowTask);
+                    IterateWorkflow(run);
+                }
             }
         }
 
@@ -97,28 +106,28 @@ namespace MikoIam.Workflows.Engine
                 IterateWorkflow(run);
             }
         }
-
+        
         protected class Precondition
         {
             private readonly Workflow<TWfContext> _workflow;
-            private readonly WorkflowTask _workflowTask;
+            private readonly WorkflowTask<TWfContext> _workflowTask;
 
             public Precondition(Workflow<TWfContext> workflow)
             {
                 _workflow = workflow;
             }
 
-            public Precondition(Workflow<TWfContext> workflow, WorkflowTask workflowTask) : this(workflow)
+            public Precondition(Workflow<TWfContext> workflow, WorkflowTask<TWfContext> workflowTask) : this(workflow)
             {
                 _workflowTask = workflowTask;
             }
 
-            public void Do(WorkflowTask workflowTask)
+            public void Do(WorkflowTask<TWfContext> workflowTask)
             {
                 _workflow._tasks.Add(workflowTask, this);
             }
 
-            public void Do<TCompleteMessage>(WorkflowTask<TCompleteMessage> workflowTask)
+            public void Do<TCompleteMessage>(WorkflowTask<TWfContext, TCompleteMessage> workflowTask)
             {
                 _workflow._tasks.Add(workflowTask, this);
                 _workflow._continuesOn.Add(workflowTask, typeof(TCompleteMessage));
@@ -129,14 +138,10 @@ namespace MikoIam.Workflows.Engine
                 _workflow._finish.Add(this);
             }
 
-            public bool Met(IEnumerable<WorkflowTask> finishedTasks)
+            public bool Met(IEnumerable<WorkflowTask<TWfContext>> finishedTasks)
             {
                 return _workflowTask == null || finishedTasks.Contains(_workflowTask);
             }
         }
-    }
-
-    public class Workflow : Workflow<EmptyContext>
-    {
     }
 }

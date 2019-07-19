@@ -8,11 +8,11 @@ using MikoIam.Workflows.Engine;
 
 namespace MikoIam.Workflows.MassTransit
 {
-    public class WorkflowConfigurator : IReceiveEndpointSpecification
+    public class WorkflowConfigurator<TWfContext> : IReceiveEndpointSpecification where TWfContext : new()
     {
-        private readonly Workflow _workflow;
+        private readonly Workflow<TWfContext> _workflow;
 
-        public WorkflowConfigurator(Workflow workflow)
+        public WorkflowConfigurator(Workflow<TWfContext> workflow)
         {
             _workflow = workflow;
         }
@@ -35,9 +35,9 @@ namespace MikoIam.Workflows.MassTransit
             }
         }
 
-        private void ConnectPipe<T>(IConsumePipeConnector pipeConnector) where T : class
+        private void ConnectPipe<TMessage>(IConsumePipeConnector pipeConnector) where TMessage : class
         {
-            var pipe = Pipe.New<ConsumeContext<T>>(cfg =>
+            var pipe = Pipe.New<ConsumeContext<TMessage>>(cfg =>
             {
                 cfg.UseExecute(ctx => _workflow.ConsumeMessage(ctx.Message));
             });

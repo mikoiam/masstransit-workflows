@@ -10,10 +10,7 @@ namespace MikoIam.Workflows.Engine
         private readonly Dictionary<WorkflowTask, Type> _continuesOn = new Dictionary<WorkflowTask, Type>();
         private readonly Dictionary<WorkflowTask, Precondition> _tasks = new Dictionary<WorkflowTask, Precondition>();
         private readonly List<Precondition> _finish = new List<Precondition>();
-        private string _workflowId;
-        private List<WorkflowTask> _finishedTasks = new List<WorkflowTask>();
-        private List<WorkflowTask> _startedTasks = new List<WorkflowTask>();
-        private TWfContext _context;
+        private WorkflowRun<TWfContext> _run;
 
         public event EventHandler<WorkflowEventArgs<TWfContext>> WorkflowStarted;
         public event EventHandler<WorkflowEventArgs<TWfContext>> WorkflowFinished;
@@ -48,59 +45,56 @@ namespace MikoIam.Workflows.Engine
             var iterate = false;
             if (_startsOn.ContainsKey(typeof(TMessage)))
             {
-                _workflowId = Guid.NewGuid().ToString();
-                _finishedTasks = new List<WorkflowTask>();
-                _startedTasks = new List<WorkflowTask>();
-                _context = ((Func<TMessage, TWfContext>) _startsOn[typeof(TMessage)])(message);
-                WorkflowStarted?.Invoke(this, new WorkflowEventArgs<TWfContext>(_workflowId, _context));
+                _run = new WorkflowRun<TWfContext>(((Func<TMessage, TWfContext>) _startsOn[typeof(TMessage)])(message));
+                WorkflowStarted?.Invoke(this, new WorkflowEventArgs<TWfContext>(_run.RunId, _run.Context));
                 iterate = true;
             }
 
             var tasks = _continuesOn.Where(kv => kv.Value == typeof(TMessage)).Select(kv => kv.Key)
-                .Where(task => _startedTasks.Contains(task));
+                .Where(task => _run.HasStarted(task));
             foreach (var workflowTask in tasks)
             {
                 TaskFinished?.Invoke(this,
-                    new WorkflowTaskEventArgs<TWfContext>(_workflowId, workflowTask.TaskId, _context));
-                _finishedTasks.Add(workflowTask);
+                    new WorkflowTaskEventArgs<TWfContext>(_run.RunId, workflowTask.TaskId, _run.Context));
+                _run.FinishTask(workflowTask);
                 iterate = true;
             }
 
             if (iterate)
             {
-                IterateWorkflow(_workflowId, _finishedTasks);
+                IterateWorkflow(_run);
             }
         }
 
-        private void IterateWorkflow(string workflowId, IReadOnlyCollection<WorkflowTask> finishedTasks)
+        private void IterateWorkflow(WorkflowRun<TWfContext> run)
         {
-            if (_finish.Exists(precondition => precondition.Met(finishedTasks)))
+            if (_finish.Exists(precondition => precondition.Met(run.FinishedTasks)))
             {
-                WorkflowFinished?.Invoke(this, new WorkflowEventArgs<TWfContext>(workflowId, _context));
+                WorkflowFinished?.Invoke(this, new WorkflowEventArgs<TWfContext>(run.RunId, run.Context));
                 return;
             }
 
-            var tasksToExecute = _tasks.Where(kv => kv.Value.Met(finishedTasks) && !finishedTasks.Contains(kv.Key))
+            var tasksToExecute = _tasks.Where(kv => kv.Value.Met(run.FinishedTasks) && !run.HasFinished(kv.Key))
                 .Select(kv => kv.Key).ToList();
 
             var anythingFinished = false;
             foreach (var task in tasksToExecute)
             {
                 task.Action();
-                _startedTasks.Add(task);
-                TaskStarted?.Invoke(this, new WorkflowTaskEventArgs<TWfContext>(workflowId, task.TaskId, _context));
+                run.StartTask(task);
+                TaskStarted?.Invoke(this, new WorkflowTaskEventArgs<TWfContext>(run.RunId, task.TaskId, run.Context));
                 if (task.Autocomplete)
                 {
                     TaskFinished?.Invoke(this,
-                        new WorkflowTaskEventArgs<TWfContext>(workflowId, task.TaskId, _context));
-                    _finishedTasks.Add(task);
+                        new WorkflowTaskEventArgs<TWfContext>(run.RunId, task.TaskId, run.Context));
+                    run.FinishTask(task);
                     anythingFinished = true;
                 }
             }
 
             if (anythingFinished)
             {
-                IterateWorkflow(workflowId, _finishedTasks);
+                IterateWorkflow(run);
             }
         }
 
